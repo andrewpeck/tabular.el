@@ -1,0 +1,254 @@
+#+title: tabular.el
+
+* Overview
+
+~tabular.el~ is an Emacs port of Tabular.vim.  It aligns text by splitting each
+line on a regexp delimiter, trimming the non-delimiter fields, padding fields to
+equal widths, and joining everything back together.
+
+It provides two main interactive commands:
+
+- ~M-x tabularize~
+- ~M-x gtabularize~
+
+~tabularize~ works on the active region, or the current line when no region is
+active.  If you call it on a single line, it automatically expands to adjacent
+matching lines.
+
+~gtabularize~ is the conservative variant: it works on the active region, or the
+whole buffer when no region is active, and leaves non-matching lines unchanged.
+
+* Basic Use
+
+Both commands accept either:
+
+- a literal tabular pattern like ~/regexp/format~
+- the name of a registered command like ~assignment~ or ~multiple_spaces~
+
+The format string is optional.  If omitted, the default is ~l1~:
+
+- ~l~: left align
+- ~r~: right align
+- ~c~: center align
+- number: spaces to insert after that field
+
+For example, ~r1c1l0~ means:
+
+1. right-align the first field, then insert 1 space
+2. center the second field, then insert 1 space
+3. left-align the third field, then insert 0 spaces
+4. repeat the pattern for additional fields
+
+* Examples
+
+** Align on commas
+
+Before:
+
+#+begin_example
+Some short phrase,some other phrase
+A much longer phrase here,and another long phrase
+#+end_example
+
+Run:
+
+#+begin_example
+M-x tabularize RET /,/ RET
+#+end_example
+
+After:
+
+#+begin_example
+Some short phrase         , some other phrase
+A much longer phrase here , and another long phrase
+#+end_example
+
+** Custom field layout
+
+Before:
+
+#+begin_example
+abc,def,ghi
+a,b
+a,b,c
+#+end_example
+
+Run:
+
+#+begin_example
+M-x tabularize RET /,/r1c1l0 RET
+#+end_example
+
+After:
+
+#+begin_example
+abc , def, ghi
+  a , b
+  a , b  ,  c
+#+end_example
+
+** Align only the first comma
+
+The port supports a single Vim-style ~\zs~ marker in the pattern, which is
+useful when you want surrounding regexp context but only want to align on part
+of the match.
+
+Before:
+
+#+begin_example
+abc,def,ghi
+a,b
+a,b,c
+#+end_example
+
+Run:
+
+#+begin_example
+M-x tabularize RET /^[^,]*\zs,/r0c0l0 RET
+#+end_example
+
+After:
+
+#+begin_example
+abc,def,ghi
+  a,b
+  a,b,c
+#+end_example
+
+** Align assignments
+
+The built-in ~assignment~ command covers simple assignment operators.
+
+Before:
+
+#+begin_example
+foo=1;
+long_name   =2;
+x+=  3;
+#+end_example
+
+Run:
+
+#+begin_example
+M-x tabularize RET assignment RET
+#+end_example
+
+Typical result:
+
+#+begin_example
+foo       = 1;
+long_name = 2;
+x        += 3;
+#+end_example
+
+** Normalize and align multiple spaces
+
+Before:
+
+#+begin_example
+a    b
+longer  c
+#+end_example
+
+Run:
+
+#+begin_example
+M-x tabularize RET multiple_spaces RET
+#+end_example
+
+After:
+
+#+begin_example
+a       b
+longer  c
+#+end_example
+
+This command first collapses runs of 3 or more spaces down to 2 spaces, then
+aligns on two-space delimiters.
+
+** Keep non-matching lines unchanged
+
+Before:
+
+#+begin_example
+a=1
+skip me
+bbb=2
+#+end_example
+
+Run:
+
+#+begin_example
+M-x gtabularize RET /=/ RET
+#+end_example
+
+After:
+
+#+begin_example
+a   = 1
+skip me
+bbb = 2
+#+end_example
+
+* Built-in Commands
+
+The port installs these commands by default:
+
+- ~assignment~
+- ~two_spaces~
+- ~multiple_spaces~
+- ~spaces~
+- ~argument_list~
+- ~split_declarations~
+- ~ternary_operator~
+- ~cpp_io~
+- ~pascal_assign~
+- ~trailing_c_comments~
+
+Example:
+
+#+begin_example
+M-x tabularize RET cpp_io RET
+#+end_example
+
+* Extending It
+
+You can define your own named commands from Lisp.
+
+Define a simple pattern command:
+
+#+begin_src emacs-lisp
+(tabular-add-pattern "equals" "=" "l1r1")
+#+end_src
+
+Define a pipeline command:
+
+#+begin_src emacs-lisp
+(tabular-add-pipeline
+ "csv-tight"
+ ","
+ (list
+  (lambda (lines)
+    (mapcar (lambda (line)
+              (replace-regexp-in-string ",\\s-*" "," line))
+            lines))
+  (lambda (lines)
+    (tabular--tabularize-lines lines "," "l1"))))
+#+end_src
+
+Then use it interactively:
+
+#+begin_example
+M-x tabularize RET equals RET
+#+end_example
+
+* Notes
+
+- ~tabularize~ remembers the last command entered.  Running it again with an
+  empty minibuffer reuses that command.
+- The delimiter engine is regexp-based and supports repeated delimiters on the
+  same line, which is the main behavior that plain ~align-regexp~ does not
+  cover well.
+- For straightforward one-off alignment jobs, Emacs built-ins like
+  ~align-regexp~ are still useful.  ~tabular.el~ is most helpful when you want
+  reusable, regex-driven alignment behavior closer to Tabular.vim.
