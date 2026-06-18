@@ -409,10 +409,6 @@ Non-matching lines are left unchanged."
   (setq tabular--last-command command)
   (tabular--operate beg end command t))
 
-(defun tabularize-has-pattern-p ()
-  "Return non-nil when a previous interactive command exists."
-  (and tabular--last-command t))
-
 (defun tabular--regexp-replace-filter (regexp replacement)
   "Return a filter replacing REGEXP with REPLACEMENT in each line."
   (lambda (lines)

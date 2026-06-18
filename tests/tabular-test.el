@@ -12,6 +12,10 @@
      ,@body
      (buffer-string)))
 
+(defun tabularize-has-pattern-p ()
+  "Return non-nil when a previous interactive command exists."
+  (and tabular--last-command t))
+
 (ert-deftest tabular-test-parse-command-pattern ()
   (should (equal (tabular--parse-command-pattern "/,/r1c1l0")
                  '("," "r1c1l0")))
