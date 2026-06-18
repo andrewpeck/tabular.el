@@ -343,6 +343,7 @@ When GTABULARIZE is non-nil, non-matching lines are left untouched."
   (lambda (lines)
     (tabular--tabularize-lines lines pattern format tabular--gtabularize)))
 
+;;;###autoload
 (defun tabular-add-pattern (name pattern &optional format local overwrite)
   "Register NAME as a tabular command for PATTERN and FORMAT.
 If LOCAL is non-nil, use the buffer-local table; OVERWRITE allows replacement."
@@ -353,6 +354,7 @@ If LOCAL is non-nil, use the buffer-local table; OVERWRITE allows replacement."
     :filters (list (tabular--pipeline-tabularize pattern format)))
    local overwrite))
 
+;;;###autoload
 (defun tabular-add-pipeline (name pattern filters &optional local overwrite)
   "Register NAME as a tabular command for PATTERN and FILTERS.
 If LOCAL is non-nil, use the buffer-local table; OVERWRITE allows replacement."
@@ -384,6 +386,7 @@ PROMPT-PREFIX is the label shown; BOUNDS-FN returns the default (BEG . END)."
                   (user-error "No previous tabular command"))
             input))))
 
+;;;###autoload
 (defun tabularize (beg end command)
   "Align region from BEG to END using COMMAND.
 
@@ -393,6 +396,7 @@ When called interactively with an empty prompt, reuse the previous command."
   (setq tabular--last-command command)
   (tabular--operate beg end command nil))
 
+;;;###autoload
 (defun gtabularize (beg end command)
   "Align region from BEG to END using COMMAND.
 Non-matching lines are left unchanged."
@@ -425,6 +429,7 @@ Non-matching lines are left unchanged."
              (--map (concat type it ";") (cdr parts)))))
    lines))
 
+;;;###autoload
 (defun tabular-install-default-commands ()
   "Install the built-in Tabular command set."
   (interactive)
